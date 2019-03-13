@@ -1,0 +1,44 @@
+---
+Organizations:
+  - &OrdererOrg
+      Name: OrdererOrg
+      ID: OrdererMSP
+      MSPDir: crypto-config/ordererOrganizations/fabric.dev/msp
+  - &Org1
+      Name: Org1
+      ID: Org1MSP
+      MSPDir: crypto-config/peerOrganizations/org1.fabric.dev/msp
+      AnchorPeers:
+        - Host: peer0.org1.fabric.dev
+          Port: 7051
+
+Application: &Application
+  Organizations:
+
+Orderer: &Orderer
+  OrdererType: solo
+  Addresses:
+    - orderer0.fabric.dev:7050
+  BatchTimeout: 1s
+  BatchSize:
+    MaxMessageCount: 50
+    AbsoluteMaxBytes: 99 MB
+    PreferredMaxBytes: 512 KB
+  Organizations:
+
+Profiles:
+  FabricApp:
+    Orderer:
+      <<: *Orderer
+      Organizations:
+        - *OrdererOrg
+    Application:
+      <<: *Application
+      Organizations:
+        - *Org1
+    Consortium: Consortium
+    Consortiums:
+      Consortium:
+        Organizations:
+          - *OrdererOrg
+          - *Org1

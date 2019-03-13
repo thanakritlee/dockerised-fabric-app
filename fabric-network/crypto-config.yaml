@@ -1,0 +1,12 @@
+OrdererOrgs:
+  - Name: OrdererOrg
+    Domain: fabric.dev
+    Specs:
+      - Hostname: orderer0
+PeerOrgs:
+  - Name: Org1
+    Domain: org1.fabric.dev
+    Template:
+      Count: 2
+    Users:
+      Count: 2
