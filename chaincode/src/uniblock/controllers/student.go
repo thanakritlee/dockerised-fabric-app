@@ -53,8 +53,6 @@ func (c *UniBlock) CreateStudent(stub shim.ChaincodeStubInterface, args []string
 		return utils.Response{}, err
 	}
 
-	fmt.Println(student)
-
 	fmt.Println("Created student")
 
 	return utils.Response{
