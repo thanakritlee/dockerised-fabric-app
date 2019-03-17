@@ -58,7 +58,7 @@ func (c *UniBlock) CreateStudent(stub shim.ChaincodeStubInterface, args []string
 	fmt.Println("Created student")
 
 	return utils.Response{
-		Status: 600,
+		Status: 200,
 		Data:   student,
 	}, nil
 
