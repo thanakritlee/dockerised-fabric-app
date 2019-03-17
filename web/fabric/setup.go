@@ -1,7 +1,6 @@
 package fabric
 
 import (
-	"encoding/json"
 	"fmt"
 
 	"github.com/hyperledger/fabric-sdk-go/pkg/client/channel"
@@ -76,6 +75,16 @@ func (fabric *Fabric) Initialise() error {
 
 	return nil
 
+}
+
+func (fabric *Fabric) closeSDK() error {
+	if !fabric.initialised {
+		return errors.New("sdk is not initialised")
+	}
+
+	fabric.sdk.Close()
+
+	return nil
 }
 
 func createChannel(fabric *Fabric) error {
@@ -191,51 +200,4 @@ func instantiateChaincode(fabric *Fabric) error {
 
 	return nil
 
-}
-
-//InvokeChaincode will invoke a function inside the chaincode.
-func (fabric *Fabric) InvokeChaincode() (channel.Response, error) {
-
-	fmt.Println("Invoking chaincode...")
-
-	type request struct {
-		StudentID  string `json:"studentid"`
-		FirstName  string `json:"firstname"`
-		MiddleName string `json:"middlename"`
-		LastName   string `json:"lastname"`
-		Age        int64  `json:"age"`
-	}
-
-	req := request{
-		StudentID:  "0000",
-		FirstName:  "Thanakrit",
-		MiddleName: "",
-		LastName:   "Lee",
-	}
-
-	reqByte, err := json.Marshal(req)
-	if err != nil {
-		return channel.Response{}, err
-	}
-
-	clientChannelContext := fabric.sdk.ChannelContext(fabric.ChannelID, fabsdk.WithUser(fabric.OrgAdmin), fabsdk.WithOrg(fabric.OrgName))
-	client, err := channel.New(clientChannelContext)
-	if err != nil {
-		return channel.Response{}, err
-	}
-
-	fabric.client = client
-
-	resp, err := fabric.client.Execute(channel.Request{
-		ChaincodeID: fabric.ChainCodeID,
-		Fcn:         "CreateStudent",
-		Args:        [][]byte{reqByte},
-	}, channel.WithRetry(retry.DefaultResMgmtOpts))
-	if err != nil {
-		return channel.Response{}, err
-	}
-
-	fmt.Println("Invoked chaincode")
-
-	return resp, err
 }
