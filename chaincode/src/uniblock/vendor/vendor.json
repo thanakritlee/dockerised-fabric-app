@@ -605,8 +605,8 @@
 		{
 			"checksumSHA1": "L7FF0L3RuqFz78K5fabhORP/FRk=",
 			"path": "github.com/thanakritlee/dockerised-fabric-app/chaincode/src/uniblock/controllers",
-			"revision": "c2ca92cf4cb35c077aa88162647de9ff5c68fe98",
-			"revisionTime": "2019-03-16T10:12:31Z"
+			"revision": "2123abf9e6e48ccd55b4c8b53a6a2e58d888e0b9",
+			"revisionTime": "2019-03-17T13:25:51Z"
 		},
 		{
 			"checksumSHA1": "L+cOoyrSgmKnjipZBQsROEPC/aA=",
