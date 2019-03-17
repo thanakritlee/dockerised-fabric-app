@@ -2,9 +2,12 @@ package main
 
 import (
 	"fmt"
+	"log"
+	"net/http"
 	"os"
 
 	"github.com/thanakritlee/dockerised-fabric-app/web/fabric"
+	"github.com/thanakritlee/dockerised-fabric-app/web/router"
 )
 
 func main() {
@@ -28,9 +31,17 @@ func main() {
 		return
 	}
 
-	resp, err := f.InvokeChaincode()
-	if err != nil {
-		fmt.Printf("Unable to invoke chaincode: %v\n", err)
+	router := router.GetRouter()
+
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "8000"
 	}
-	fmt.Println(resp)
+
+	log.Printf("http server started on :%s\n", port)
+	err = http.ListenAndServe(":"+port, router)
+	if err != nil {
+		log.Fatal("ListenAndServe: ", err)
+	}
+
 }
