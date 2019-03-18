@@ -23,7 +23,7 @@ type Fabric struct {
 	OrdererID       string
 	ChannelID       string
 	ChainCodeID     string
-	initialised     bool
+	Initialised     bool
 	ChannelConfig   string
 	ChaincodeGoPath string
 	OrgAdmin        string
@@ -40,7 +40,7 @@ type Fabric struct {
 // Initialise sets up the Fabric network and connect the SDK to it.
 func (fabric *Fabric) Initialise() error {
 
-	if fabric.initialised {
+	if fabric.Initialised {
 		return errors.New("sdk is already intialised")
 	}
 
@@ -78,7 +78,7 @@ func (fabric *Fabric) Initialise() error {
 }
 
 func (fabric *Fabric) closeSDK() error {
-	if !fabric.initialised {
+	if !fabric.Initialised {
 		return errors.New("sdk is not initialised")
 	}
 
