@@ -24,9 +24,10 @@ func NewError(err error, w http.ResponseWriter) {
 }
 
 // CheckError check if an error occur and if there's an error, return an error HTTP response.
-func CheckError(err error, w http.ResponseWriter) {
+func CheckError(err error, w http.ResponseWriter) bool {
 	if err != nil {
 		NewError(err, w)
-		return
+		return true
 	}
+	return false
 }

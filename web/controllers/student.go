@@ -39,19 +39,27 @@ func CreateStudent(w http.ResponseWriter, r *http.Request) {
 
 	decorder := json.NewDecoder(r.Body)
 	err := decorder.Decode(&req)
-	u.CheckError(err, w)
+	if isError := u.CheckError(err, w); isError {
+		return
+	}
 
 	reqByte, err := json.Marshal(req)
-	u.CheckError(err, w)
+	if isError := u.CheckError(err, w); isError {
+		return
+	}
 
 	// Invoke the chaincode function `CreateStudent`
 	resp, err := fabric.InvokeChaincode(reqByte, "CreateStudent")
-	u.CheckError(err, w)
+	if isError := u.CheckError(err, w); isError {
+		return
+	}
 
 	// Unmarshal the payload peer response from chaincode.
 	response := Response{}
 	err = json.Unmarshal(resp.Payload, &response)
-	u.CheckError(err, w)
+	if isError := u.CheckError(err, w); isError {
+		return
+	}
 
 	// Return HTTP response.
 	res := u.Message("success")
