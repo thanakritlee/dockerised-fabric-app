@@ -13,6 +13,7 @@ import (
 func main() {
 	f := fabric.Fabric{
 		OrdererID:       "orderer0.example.com",
+		CaID:            "ca.org1.example.com",
 		ChannelID:       "channel",
 		ChannelConfig:   os.Getenv("GOPATH") + "/src/github.com/thanakritlee/dockerised-fabric-app/fabric-network/config/channel.tx",
 		ChainCodeID:     "uniblock",
@@ -26,7 +27,7 @@ func main() {
 		Initialised:     true,
 	}
 
-	if len(os.Args) > 1 {
+	if len(os.Args) > 1 && os.Args[1] == "init" {
 		f.Initialised = false
 	}
 
