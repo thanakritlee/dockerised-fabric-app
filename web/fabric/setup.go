@@ -21,6 +21,7 @@ type Fabric struct {
 	ConfigFile      string
 	OrgID           string
 	OrdererID       string
+	CaID            string
 	ChannelID       string
 	ChainCodeID     string
 	Initialised     bool
@@ -73,11 +74,17 @@ func (fabric *Fabric) Initialise() error {
 		return errors.Cause(err)
 	}
 
+	err = createUser(fabric)
+	if err != nil {
+		return errors.Cause(err)
+	}
+
 	return nil
 
 }
 
-func (fabric *Fabric) closeSDK() error {
+// CloseSDK releases the Hyperledger Fabric SDK resource.
+func (fabric *Fabric) CloseSDK() error {
 	if !fabric.Initialised {
 		return errors.New("sdk is not initialised")
 	}
@@ -107,6 +114,7 @@ func createChannel(fabric *Fabric) error {
 	if err != nil {
 		return errors.Cause(err)
 	}
+
 	req := resmgmt.SaveChannelRequest{
 		ChannelID:         fabric.ChannelID,
 		ChannelConfigPath: fabric.ChannelConfig,
@@ -149,7 +157,7 @@ func joinChannel(fabric *Fabric) error {
 }
 
 func installChaicode(fabric *Fabric) error {
-	fmt.Println("Installing chaincode")
+	fmt.Println("Installing chaincode...")
 
 	ccPkg, err := packager.NewCCPackage(fabric.ChainCodeID, fabric.ChaincodeGoPath)
 	if err != nil {
@@ -175,7 +183,7 @@ func installChaicode(fabric *Fabric) error {
 }
 
 func instantiateChaincode(fabric *Fabric) error {
-	fmt.Println("Instantiating chaincode")
+	fmt.Println("Instantiating chaincode...")
 
 	// Set up the chaincode policy.
 	ccPolicy := cauthdsl.SignedByAnyMember([]string{fabric.OrgMSP})
@@ -198,6 +206,39 @@ func instantiateChaincode(fabric *Fabric) error {
 
 	fmt.Println("Instantiated chaincode")
 
+	return nil
+
+}
+
+// createUser register and enroll a Hyperledger Fabric user.
+func createUser(fabric *Fabric) error {
+	fmt.Println("Creating user...")
+
+	username := "user0"
+
+	mspClient, err := mspclient.New(fabric.sdk.Context())
+	if err != nil {
+		return errors.Cause(err)
+	}
+
+	enrollmentSecret, err := mspClient.Register(&mspclient.RegistrationRequest{
+		Name:           username,
+		Type:           "user",
+		MaxEnrollments: 0,
+		Affiliation:    "org1",
+		CAName:         fabric.CaID,
+		Attributes:     []mspclient.Attribute{{Name: "role", Value: "student"}},
+	})
+	if err != nil {
+		return errors.Cause(err)
+	}
+
+	err = mspClient.Enroll(username, mspclient.WithSecret(enrollmentSecret))
+	if err != nil {
+		return errors.Cause(err)
+	}
+
+	fmt.Println("Created user")
 	return nil
 
 }
