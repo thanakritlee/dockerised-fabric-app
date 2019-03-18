@@ -5,6 +5,7 @@ import (
 	"os"
 
 	"github.com/hyperledger/fabric-sdk-go/pkg/client/channel"
+	msp "github.com/hyperledger/fabric-sdk-go/pkg/client/msp"
 	"github.com/hyperledger/fabric-sdk-go/pkg/common/errors/retry"
 	"github.com/hyperledger/fabric-sdk-go/pkg/core/config"
 	"github.com/hyperledger/fabric-sdk-go/pkg/fabsdk"
@@ -16,6 +17,7 @@ func InvokeChaincode(req []byte, function string) (channel.Response, error) {
 
 	fabric := Fabric{
 		OrdererID:       "orderer0.example.com",
+		CaID:            "ca.org1.example.com",
 		ChannelID:       "channel",
 		ChannelConfig:   os.Getenv("GOPATH") + "/src/github.com/thanakritlee/dockerised-fabric-app/fabric-network/config/channel.tx",
 		ChainCodeID:     "uniblock",
@@ -32,7 +34,6 @@ func InvokeChaincode(req []byte, function string) (channel.Response, error) {
 
 	// Create a new Fabric SDK instance using config from ConfigFile.
 	sdk, err := fabsdk.New(config.FromFile(fabric.ConfigFile))
-
 	if err != nil {
 		return channel.Response{}, errors.WithMessage(err, "failed to create SDK")
 	}
@@ -40,10 +41,27 @@ func InvokeChaincode(req []byte, function string) (channel.Response, error) {
 	fabric.sdk = sdk
 	// Close the SDK and release resources when done (returned).
 	defer fabric.sdk.Close()
-	fmt.Println("SDK created")
+
+	// Register and Enroll user.
+	mspClient, err := msp.New(fabric.sdk.Context())
+	if err != nil {
+		return channel.Response{}, err
+	}
+
+	username := "user0"
+
+	signingIdentity, err := mspClient.GetSigningIdentity(username)
+	if err != nil {
+		return channel.Response{}, err
+	}
 
 	// Create a Fabric channel context.
-	clientChannelContext := fabric.sdk.ChannelContext(fabric.ChannelID, fabsdk.WithUser(fabric.OrgAdmin), fabsdk.WithOrg(fabric.OrgName))
+	clientChannelContext := fabric.sdk.ChannelContext(
+		fabric.ChannelID,
+		fabsdk.WithUser(username),
+		fabsdk.WithOrg(fabric.OrgName),
+		fabsdk.WithIdentity(signingIdentity),
+	)
 	client, err := channel.New(clientChannelContext)
 	if err != nil {
 		return channel.Response{}, err
@@ -58,7 +76,7 @@ func InvokeChaincode(req []byte, function string) (channel.Response, error) {
 		Args:        [][]byte{req},
 	}, channel.WithRetry(retry.DefaultResMgmtOpts))
 	if err != nil {
-		return channel.Response{}, err
+		return resp, err
 	}
 
 	fmt.Println("Invoked chaincode")
