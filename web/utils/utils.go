@@ -19,7 +19,7 @@ func Response(w http.ResponseWriter, data map[string]interface{}) {
 // NewError create a HTTP error response.
 func NewError(err error, w http.ResponseWriter) {
 	res := Message("error")
-	res["data"] = err
+	res["data"] = err.Error()
 	Response(w, res)
 }
 
