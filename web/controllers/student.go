@@ -37,6 +37,8 @@ func CreateStudent(w http.ResponseWriter, r *http.Request) {
 
 	req := request{}
 
+	defer r.Body.Close()
+
 	decorder := json.NewDecoder(r.Body)
 	err := decorder.Decode(&req)
 	if isError := u.CheckError(err, w); isError {
