@@ -6,10 +6,6 @@ go:
 env:
   - GO111MODULE=on
 
-script:
-  - cd ./web/ && go build
-  - cd ./web/ && go test
-
 notifications:
   email:
     - contact@thanakritlee.dev
