@@ -4,12 +4,12 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/hyperledger/fabric-sdk-go/pkg/client/channel"
+	msp "github.com/hyperledger/fabric-sdk-go/pkg/client/msp"
+	"github.com/hyperledger/fabric-sdk-go/pkg/common/errors/retry"
+	"github.com/hyperledger/fabric-sdk-go/pkg/core/config"
+	"github.com/hyperledger/fabric-sdk-go/pkg/fabsdk"
 	"github.com/pkg/errors"
-	"github.com/thanakritlee/fabric-sdk-go/pkg/client/channel"
-	msp "github.com/thanakritlee/fabric-sdk-go/pkg/client/msp"
-	"github.com/thanakritlee/fabric-sdk-go/pkg/common/errors/retry"
-	"github.com/thanakritlee/fabric-sdk-go/pkg/core/config"
-	"github.com/thanakritlee/fabric-sdk-go/pkg/fabsdk"
 )
 
 //InvokeChaincode will invoke a function inside the chaincode.
