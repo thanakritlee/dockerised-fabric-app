@@ -1,0 +1,102 @@
+#
+# Copyright IBM Corp All Rights Reserved
+#
+# SPDX-License-Identifier: Apache-2.0
+#
+version: '3'
+
+networks:
+  network:
+
+services:
+  ca.org1.example.com:
+    container_name: ${CA_SERVICE_NAME}
+    image: ${CA_DOCKER_VERSION}
+    environment:
+      - FABRIC_CA_SERVER_CA_NAME=${CA_SERVICE_NAME}
+    ports:
+      - "7054:7054"
+    command: sh -c 'fabric-ca-server start -b admin:adminpw'
+    networks:
+      - network
+
+  orderer0.example.com:
+    container_name: ${ORDERER_SERVICE_NAME}
+    image: ${ORDERER_DOCKER_VERSION}
+    environment:
+      - ORDERER_GENERAL_LOGLEVEL=info
+      - ORDERER_GENERAL_LISTENADDRESS=0.0.0.0
+      - ORDERER_GENERAL_LISTENPORT=7050
+      - ORDERER_GENERAL_GENESISMETHOD=file
+      - ORDERER_GENERAL_LOCALMSPID=OrdererMSP
+    working_dir: /opt/gopath/src/github.com/hyperledger/fabric/orderer
+    command: orderer
+    ports:
+      - 7050:7050
+    networks:
+      - network
+
+  peer0.org1.example.com:
+    container_name: ${PEER_SERVICE_NAME}
+    image: ${PEER_DOCKER_VERSION}
+    environment:
+      - GODEBUG=netdns=go
+      - CORE_PEER_GOSSIP_EXTERNALENDPOINT=${PEER_SERVICE_NAME}:7051
+      - CORE_PEER_ID=${PEER_SERVICE_NAME}
+      - CORE_LOGGING_PEER=info
+      - CORE_CHAINCODE_LOGGING_LEVEL=info
+      - CORE_PEER_LOCALMSPID=Org1MSP
+      - CORE_PEER_ADDRESS=${PEER_SERVICE_NAME}:7051
+      # # the following setting starts chaincode containers on the same
+      # # bridge network as the peers
+      # # https://docs.docker.com/compose/networking/
+      - CORE_VM_DOCKER_HOSTCONFIG_NETWORKMODE=${COMPOSE_PROJECT_NAME}_network
+      - CORE_LEDGER_STATE_STATEDATABASE=CouchDB
+      - CORE_LEDGER_STATE_COUCHDBCONFIG_COUCHDBADDRESS=${COUCHDB_SERVICE_NAME}:5984
+      # The CORE_LEDGER_STATE_COUCHDBCONFIG_USERNAME and CORE_LEDGER_STATE_COUCHDBCONFIG_PASSWORD
+      # provide the credentials for ledger to connect to CouchDB.  The username and password must
+      # match the username and password set for the associated CouchDB.
+      - CORE_LEDGER_STATE_COUCHDBCONFIG_USERNAME=${COUCHDB_USER}
+      - CORE_LEDGER_STATE_COUCHDBCONFIG_PASSWORD=${COUCHDB_PASSWORD}
+    working_dir: /opt/gopath/src/github.com/hyperledger/fabric
+    command: peer node start
+    # command: peer node start --peer-chaincodedev=true
+    ports:
+      - 7051:7051
+      - 7053:7053
+    depends_on:
+      - ${ORDERER_SERVICE_NAME}
+      - ${COUCHDB_SERVICE_NAME}
+    networks:
+      - network
+
+  couchdb0:
+    container_name: ${COUCHDB_SERVICE_NAME}
+    image: ${COUCHDB_DOCKER_VERSION}
+    # Populate the COUCHDB_USER and COUCHDB_PASSWORD to set an admin user and password
+    # for CouchDB.  This will prevent CouchDB from operating in an "Admin Party" mode.
+    environment:
+      - COUCHDB_USER=${COUCHDB_USER}
+      - COUCHDB_PASSWORD=${COUCHDB_PASSWORD}
+    ports:
+      - 5984:5984
+    networks:
+      - network
+
+  web:
+    container_name: ${WEB_SERVICE_NAME}
+    image: ${WEB_DOCKER_VERSION}
+    environment:
+      - PROJECTPATH=${PROJECTPATH}
+      - WEB_PORT=${WEB_PORT}
+      - CA_SERVICE_NAME=${CA_SERVICE_NAME}
+      - ORDERER_SERVICE_NAME=${ORDERER_SERVICE_NAME}
+      - PEER_SERVICE_NAME=${PEER_SERVICE_NAME}
+    working_dir: /app/web
+    command: ./web init
+    ports:
+      - ${WEB_PORT}:${WEB_PORT}
+    depends_on:
+      - ${PEER_SERVICE_NAME}
+    networks: 
+      - network
