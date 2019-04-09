@@ -1,23 +1,32 @@
 package main
 
 import (
-	"fmt"
 	"log"
 	"net/http"
 	"os"
+	"path/filepath"
 
 	"github.com/thanakritlee/dockerised-fabric-app/web/fabric"
 	"github.com/thanakritlee/dockerised-fabric-app/web/router"
 )
 
 func main() {
+
+	dir, err := os.Getwd()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	channelConfigPath := filepath.Dir(dir) + "/fabric-network/config/channel.tx"
+	chaincodePath := filepath.Dir(dir) + "/chaincode/"
+
 	f := fabric.Fabric{
 		OrdererID:       "orderer0.example.com",
 		CaID:            "ca.org1.example.com",
 		ChannelID:       "channel",
-		ChannelConfig:   os.Getenv("GOPATH") + "/src/github.com/thanakritlee/dockerised-fabric-app/fabric-network/config/channel.tx",
+		ChannelConfig:   channelConfigPath,
 		ChainCodeID:     "uniblock",
-		ChaincodeGoPath: os.Getenv("GOPATH") + "/src/github.com/thanakritlee/dockerised-fabric-app/chaincode/",
+		ChaincodeGoPath: chaincodePath,
 		OrgAdmin:        "Admin",
 		OrgName:         "Org1",
 		OrgMSP:          "Org1MSP",
@@ -31,14 +40,14 @@ func main() {
 		f.Initialised = false
 	}
 
-	err := f.Initialise()
+	err = f.Initialise()
 	if err != nil {
-		fmt.Printf("Unable to initialise the Fabric SDK: %v\n", err)
+		log.Fatal("Unable to initialise the Fabric SDK: ", err)
 	}
 
 	router := router.GetRouter()
 
-	port := os.Getenv("PORT")
+	port := os.Getenv("WEB_PORT")
 	if port == "" {
 		port = "8000"
 	}
