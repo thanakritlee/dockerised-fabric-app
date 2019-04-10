@@ -64,6 +64,8 @@ services:
     ports:
       - 7051:7051
       - 7053:7053
+    volumes:
+        - /var/run/:/host/var/run/
     depends_on:
       - ${ORDERER_SERVICE_NAME}
       - ${COUCHDB_SERVICE_NAME}
