@@ -157,7 +157,7 @@ organizations:
     # cryptoPath: peerOrganizations/org1.hf.chainhero.io/users/{userName}@org1.hf.chainhero.io/msp
     cryptoPath: peerOrganizations/org1.example.com/users/Admin@org1.example.com/msp
     peers:
-      - ${PEER_SERVICE_NAME}
+      - peer0.org1.example.com
 
     # [Optional]. Certificate Authorities issue certificates for identification purposes in a Fabric based
     # network. Typically certificates provisioning is done in a separate process outside of the
@@ -165,7 +165,7 @@ organizations:
     # dynamic certificate management (enroll, revoke, re-enroll). The following section is only for
     # Fabric-CA servers.
     certificateAuthorities:
-      - ${CA_SERVICE_NAME}
+      - ca.org1.example.com
   
   # Orderer Org name
   ordererorg:
@@ -182,12 +182,12 @@ organizations:
 #
 orderers:
   orderer0.example.com:
-    url: grpc://${ORDERER_SERVICE_NAME}:7050
+    url: grpc://orderer0.example.com:7050
 
     # these are standard properties defined by the gRPC library
     # they will be passed in as-is to gRPC client constructor
     grpcOptions:
-      ssl-target-name-override: ${ORDERER_SERVICE_NAME}
+      ssl-target-name-override: orderer0.example.com
       # These parameters should be set in coordination with the keepalive policy on the server,
       # as incompatible settings can result in closing of connection.
       # When duration of the 'keep-alive-time' is set to 0 or less the keep alive client parameters are disabled
@@ -208,12 +208,12 @@ orderers:
 peers:
   peer0.org1.example.com:
     # this URL is used to send endorsement and query requests
-    url: grpc://${PEER_SERVICE_NAME}:7051
+    url: grpc://peer0.org1.example.com:7051
     # eventUrl is only needed when using eventhub (default is delivery service)
-    eventUrl: grpc://${PEER_SERVICE_NAME}:7053
+    eventUrl: grpc://peer0.org1.example.com:7053
 
     grpcOptions:
-      ssl-target-name-override: ${PEER_SERVICE_NAME}
+      ssl-target-name-override: peer0.org1.example.com
       # These parameters should be set in coordination with the keepalive policy on the server,
       # as incompatible settings can result in closing of connection.
       # When duration of the 'keep-alive-time' is set to 0 or less the keep alive client parameters are disabled
@@ -235,7 +235,7 @@ peers:
 #
 certificateAuthorities:
   ca.org1.example.com:
-    url: grpc://${CA_SERVICE_NAME}:7054
+    url: grpc://ca.org1.example.com:7054
     # Fabric-CA supports dynamic user enrollment via REST APIs. A "root" user, a.k.a registrar, is
     # needed to enroll and invoke new users.
     httpOptions:
@@ -244,26 +244,26 @@ certificateAuthorities:
       enrollId: admin
       enrollSecret: adminpw
     # [Optional] The optional name of the CA.
-    caName: ${CA_SERVICE_NAME}
+    caName: ca.org1.example.com
     tlsCACerts:
       # Certificate location absolute path
-      path: ${PROJECTPATH}/fabric-network/crypto-config/peerOrganizations/org1.example.com/ca/${CA_SERVICE_NAME}-cert.pem
+      path: ${PROJECTPATH}/fabric-network/crypto-config/peerOrganizations/org1.example.com/ca/ca.org1.example.com-cert.pem
 
 entityMatchers:
   peer:
     - pattern: (\w*)peer0.org1.example.com(\w*)
-      urlSubstitutionExp: grpc://${PEER_SERVICE_NAME}:7051
-      eventUrlSubstitutionExp: ${PEER_SERVICE_NAME}:7053
-      sslTargetOverrideUrlSubstitutionExp: ${PEER_SERVICE_NAME}
-      mappedHost: ${PEER_SERVICE_NAME}
+      urlSubstitutionExp: grpc://peer0.org1.example.com:7051
+      eventUrlSubstitutionExp: peer0.org1.example.com:7053
+      sslTargetOverrideUrlSubstitutionExp: peer0.org1.example.com
+      mappedHost: peer0.org1.example.com
 
   orderer:
     - pattern: (\w*)orderer0.example.com(\w*)
-      urlSubstitutionExp: grpc://${ORDERER_SERVICE_NAME}:7050
-      sslTargetOverrideUrlSubstitutionExp: ${ORDERER_SERVICE_NAME}
-      mappedHost: ${ORDERER_SERVICE_NAME}
+      urlSubstitutionExp: grpc://orderer0.example.com:7050
+      sslTargetOverrideUrlSubstitutionExp: orderer0.example.com
+      mappedHost: orderer0.example.com
 
   certificateAuthorities:
     - pattern: (\w*)ca.org1.example.com(\w*)
-      urlSubstitutionExp: grpc://${CA_SERVICE_NAME}:7054
-      mappedHost: ${CA_SERVICE_NAME}
+      urlSubstitutionExp: grpc://ca.org1.example.com:7054
+      mappedHost: ca.org1.example.com
