@@ -95,7 +95,7 @@ services:
       - ORDERER_SERVICE_NAME=${ORDERER_SERVICE_NAME}
       - PEER_SERVICE_NAME=${PEER_SERVICE_NAME}
     working_dir: /app/web
-    command: ./web init
+    command: ./web
     ports:
       - ${WEB_PORT}:${WEB_PORT}
     depends_on:
