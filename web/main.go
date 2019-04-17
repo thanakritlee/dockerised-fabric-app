@@ -33,16 +33,12 @@ func main() {
 		OrdererOrgName:  "OrdererOrg",
 		ConfigFile:      "config.yaml",
 		UserName:        "Admin",
-		Initialised:     true,
-	}
-
-	if len(os.Args) > 1 && os.Args[1] == "init" {
-		f.Initialised = false
+		Initialised:     false,
 	}
 
 	err = f.Initialise()
 	if err != nil {
-		log.Fatal("Unable to initialise the Fabric SDK: ", err)
+		log.Printf("Fabric SDK already initialised.")
 	}
 
 	router := router.GetRouter()
