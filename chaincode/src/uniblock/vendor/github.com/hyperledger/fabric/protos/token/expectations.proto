@@ -9,8 +9,9 @@ syntax = "proto3";
 option go_package = "github.com/hyperledger/fabric/protos/token";
 option java_package = "org.hyperledger.fabric.protos.token";
 
-package token;
+package protos;
 
+import "google/protobuf/timestamp.proto";
 import "token/transaction.proto";
 
 // TokenExpectation represent the belief that someone should achieve in terms of a token action
@@ -35,5 +36,5 @@ message PlainExpectation {
 // certain outputs will be matched
 message PlainTokenExpectation {
     // Outputs contains the expected outputs
-    repeated Token outputs = 1;
+    repeated PlainOutput outputs = 1;
 }

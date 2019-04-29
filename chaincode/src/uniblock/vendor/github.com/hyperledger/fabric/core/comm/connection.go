@@ -30,14 +30,19 @@ var commLogger = flogging.MustGetLogger("comm")
 var credSupport *CredentialSupport
 var once sync.Once
 
-// CredentialSupport type manages credentials used for gRPC client connections
-type CredentialSupport struct {
+// CASupport type manages certificate authorities scoped by channel
+type CASupport struct {
 	sync.RWMutex
 	AppRootCAsByChain     map[string][][]byte
 	OrdererRootCAsByChain map[string][][]byte
 	ClientRootCAs         [][]byte
 	ServerRootCAs         [][]byte
-	clientCert            tls.Certificate
+}
+
+// CredentialSupport type manages credentials used for gRPC client connections
+type CredentialSupport struct {
+	*CASupport
+	clientCert tls.Certificate
 }
 
 // GetCredentialSupport returns the singleton CredentialSupport instance
@@ -45,11 +50,37 @@ func GetCredentialSupport() *CredentialSupport {
 
 	once.Do(func() {
 		credSupport = &CredentialSupport{
-			AppRootCAsByChain:     make(map[string][][]byte),
-			OrdererRootCAsByChain: make(map[string][][]byte),
+			CASupport: &CASupport{
+				AppRootCAsByChain:     make(map[string][][]byte),
+				OrdererRootCAsByChain: make(map[string][][]byte),
+			},
 		}
 	})
 	return credSupport
+}
+
+// GetClientRootCAs returns the PEM-encoded root certificates for all of the
+// application and orderer organizations defined for all chains.  The root
+// certificates returned should be used to set the trusted client roots for
+// TLS servers.
+func (cas *CASupport) GetClientRootCAs() (appRootCAs, ordererRootCAs [][]byte) {
+	cas.RLock()
+	defer cas.RUnlock()
+
+	appRootCAs = [][]byte{}
+	ordererRootCAs = [][]byte{}
+
+	for _, appRootCA := range cas.AppRootCAsByChain {
+		appRootCAs = append(appRootCAs, appRootCA...)
+	}
+
+	for _, ordererRootCA := range cas.OrdererRootCAsByChain {
+		ordererRootCAs = append(ordererRootCAs, ordererRootCA...)
+	}
+
+	// also need to append statically configured root certs
+	appRootCAs = append(appRootCAs, cas.ClientRootCAs...)
+	return appRootCAs, ordererRootCAs
 }
 
 // SetClientCertificate sets the tls.Certificate to use for gRPC client
@@ -63,13 +94,18 @@ func (cs *CredentialSupport) GetClientCertificate() tls.Certificate {
 	return cs.clientCert
 }
 
-// GetDeliverServiceCredentials returns gRPC transport credentials for given
-// channel to be used by gRPC clients which communicate with ordering service endpoints.
-// If the channel isn't found, an error is returned.
-func (cs *CredentialSupport) GetDeliverServiceCredentials(channelID string) (credentials.TransportCredentials, error) {
+// GetDeliverServiceCredentials returns gRPC transport credentials for given channel
+// to be used by gRPC clients which communicate with ordering service endpoints.
+// If appendStaticRoots is set to true, ServerRootCAs are also included in the
+// credentials.  If the channel isn't found, an error is returned.
+func (cs *CredentialSupport) GetDeliverServiceCredentials(
+	channelID string,
+	appendStaticRoots bool,
+) (credentials.TransportCredentials, error) {
 	cs.RLock()
 	defer cs.RUnlock()
 
+	var creds credentials.TransportCredentials
 	tlsConfig := &tls.Config{
 		Certificates: []tls.Certificate{cs.clientCert},
 	}
@@ -88,14 +124,30 @@ func (cs *CredentialSupport) GetDeliverServiceCredentials(channelID string) (cre
 			if err == nil {
 				certPool.AddCert(cert)
 			} else {
-				commLogger.Warningf("Failed to add root cert to credentials (%s)", err)
+				commLogger.Warningf("Failed to add root cert to credentials: %s", err)
 			}
 		} else {
 			commLogger.Warning("Failed to add root cert to credentials")
 		}
 	}
+	if appendStaticRoots {
+		for _, cert := range cs.ServerRootCAs {
+			block, _ := pem.Decode(cert)
+			if block != nil {
+				cert, err := x509.ParseCertificate(block.Bytes)
+				if err == nil {
+					certPool.AddCert(cert)
+				} else {
+					commLogger.Warningf("Failed to add root cert to credentials: %s", err)
+				}
+			} else {
+				commLogger.Warning("Failed to add root cert to credentials")
+			}
+		}
+	}
 	tlsConfig.RootCAs = certPool
-	return credentials.NewTLS(tlsConfig), nil
+	creds = credentials.NewTLS(tlsConfig)
+	return creds, nil
 }
 
 // GetPeerCredentials returns gRPC transport credentials for use by gRPC

@@ -12,7 +12,6 @@ import (
 	"io"
 	"strings"
 
-	"github.com/hyperledger/fabric/common/flogging"
 	"github.com/pkg/errors"
 )
 
@@ -22,9 +21,6 @@ import (
 const (
 	ccPackageStatedbDir = "META-INF/statedb/"
 )
-
-//logger used by this package
-var logger = flogging.MustGetLogger("chaincode.platform.metadata")
 
 //TargzMetadataProvider provides Metadata from chaincode packaged in Targz format
 //(go, java and node platforms)

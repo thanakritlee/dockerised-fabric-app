@@ -1,12 +1,13 @@
 .PHONY: \
 	all \
 	staticcheck \
+	fmt \
 	fmtcheck \
 	pretest \
 	test \
 	integration
 
-DEP_TOOL ?= dep
+DEP_TOOL ?= mod
 
 all: test
 
@@ -15,7 +16,11 @@ staticcheck:
 	staticcheck ./...
 
 fmtcheck:
-	if [ -z "$${SKIP_FMT_CHECK}" ]; then [ -z "$$(gofmt -s -d *.go ./testing | tee /dev/stderr)" ]; fi
+	if [ -z "$${SKIP_FMT_CHECK}" ]; then [ -z "$$(gofumpt -s -d . | tee /dev/stderr)" ]; fi
+
+fmt:
+	GO111MODULE=off go get mvdan.cc/gofumpt
+	gofumpt -s -w .
 
 testdeps:
 ifeq ($(DEP_TOOL), dep)

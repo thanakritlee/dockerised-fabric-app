@@ -27,7 +27,7 @@ import (
 	"github.com/hyperledger/fabric/core/comm"
 	"github.com/hyperledger/fabric/protos/ledger/queryresult"
 	pb "github.com/hyperledger/fabric/protos/peer"
-	"github.com/hyperledger/fabric/protoutil"
+	"github.com/hyperledger/fabric/protos/utils"
 	logging "github.com/op/go-logging"
 	"github.com/pkg/errors"
 	"github.com/spf13/viper"
@@ -36,6 +36,7 @@ import (
 
 // Logger for the shim package.
 var chaincodeLogger = logging.MustGetLogger("shim")
+var logOutput = os.Stderr
 
 var key string
 var cert string
@@ -403,18 +404,18 @@ func (stub *ChaincodeStub) init(handler *Handler, channelId string, txid string,
 	if signedProposal != nil {
 		var err error
 
-		stub.proposal, err = protoutil.GetProposal(signedProposal.ProposalBytes)
+		stub.proposal, err = utils.GetProposal(signedProposal.ProposalBytes)
 		if err != nil {
 			return errors.WithMessage(err, "failed extracting signedProposal from signed signedProposal")
 		}
 
 		// Extract creator, transient, binding...
-		stub.creator, stub.transient, err = protoutil.GetChaincodeProposalContext(stub.proposal)
+		stub.creator, stub.transient, err = utils.GetChaincodeProposalContext(stub.proposal)
 		if err != nil {
 			return errors.WithMessage(err, "failed extracting signedProposal fields")
 		}
 
-		stub.binding, err = protoutil.ComputeProposalBinding(stub.proposal)
+		stub.binding, err = utils.ComputeProposalBinding(stub.proposal)
 		if err != nil {
 			return errors.WithMessage(err, "failed computing binding from signedProposal")
 		}
@@ -518,14 +519,6 @@ func (stub *ChaincodeStub) GetPrivateData(collection string, key string) ([]byte
 		return nil, fmt.Errorf("collection must not be an empty string")
 	}
 	return stub.handler.handleGetState(collection, key, stub.ChannelId, stub.TxID)
-}
-
-// GetPrivateDataHash documentation can be found in interfaces.go
-func (stub *ChaincodeStub) GetPrivateDataHash(collection string, key string) ([]byte, error) {
-	if collection == "" {
-		return nil, fmt.Errorf("collection must not be an empty string")
-	}
-	return stub.handler.handleGetPrivateDataHash(collection, key, stub.ChannelId, stub.TxID)
 }
 
 // PutPrivateData documentation can be found in interfaces.go
@@ -1008,11 +1001,11 @@ func (stub *ChaincodeStub) GetArgsSlice() ([]byte, error) {
 
 // GetTxTimestamp documentation can be found in interfaces.go
 func (stub *ChaincodeStub) GetTxTimestamp() (*timestamp.Timestamp, error) {
-	hdr, err := protoutil.GetHeader(stub.proposal.Header)
+	hdr, err := utils.GetHeader(stub.proposal.Header)
 	if err != nil {
 		return nil, err
 	}
-	chdr, err := protoutil.UnmarshalChannelHeader(hdr.ChannelHeader)
+	chdr, err := utils.UnmarshalChannelHeader(hdr.ChannelHeader)
 	if err != nil {
 		return nil, err
 	}
