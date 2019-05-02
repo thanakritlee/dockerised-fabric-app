@@ -1,5 +1,3 @@
-# Binary
-uniblock
+vendor/
 
-# Dependencies
-/vendor
+uniblock
